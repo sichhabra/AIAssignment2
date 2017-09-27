@@ -74,7 +74,20 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        """ Initial Score value"""
+        score = successorGameState.getScore();
+        """ If food is left in the list will move pacman in direction of food reciprocal of nearest food distance"""
+        if(len(newFood.asList())>0):
+            minimum = min([manhattanDistance(newPos,food) for food in newFood.asList()])
+            score+=10/minimum;
+
+        """ If ghost is present nearby need to move away from it : 20 double priority than food for pacman to live."""
+        distance = manhattanDistance(newPos,newGhostStates[0].configuration.pos)
+        if(distance>0):
+            score-=20/distance
+
+        """ final score for making pacman move towards food and away from ghost."""
+        return score
 
 def scoreEvaluationFunction(currentGameState):
     """
