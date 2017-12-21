@@ -1,2 +1,2 @@
 # AIAssignment2
-A pacman game with ghosts as a part of AI Assignment.
+A pacman game simulation with multiagents(player and ghosts) as a part of AI Assignment.
