@@ -74,20 +74,22 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
+
         """ Initial Score value"""
         score = successorGameState.getScore();
         """ If food is left in the list will move pacman in direction of food reciprocal of nearest food distance"""
-        if(len(newFood.asList())>0):
-            minimum = min([manhattanDistance(newPos,food) for food in newFood.asList()])
-            score+=10/minimum;
+        if (len(newFood.asList()) > 0):
+            minimum = min([manhattanDistance(newPos, food) for food in newFood.asList()])
+            score += 10 / minimum;
 
         """ If ghost is present nearby need to move away from it : 20 double priority than food for pacman to live."""
-        distance = manhattanDistance(newPos,newGhostStates[0].configuration.pos)
-        if(distance>0):
-            score-=20/distance
+        distance = manhattanDistance(newPos, newGhostStates[0].configuration.pos)
+        if (distance > 0):
+            score -= 20 / distance
 
         """ final score for making pacman move towards food and away from ghost."""
         return score
+
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -142,19 +144,129 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+        def Minimax(state, depth, agent):
+            """ Initially check the edje cases """
+            if state.isLose() or state.isWin() or (depth == 0):
+                return self.evaluationFunction(state), Directions.STOP
+
+            """ Next, add the agents and check the state + action """
+            nextAgent = (agent + 1) % totalAgents
+            if agent == self.index:  # Max
+                currentValue = float("-inf")
+                currentAction = Directions.STOP
+                actions = state.getLegalActions(agent)
+                """ If the nextState is greater than currentState"""
+                for action in actions:
+                    state_reached = state.generateSuccessor(agent, action)
+                    stateAction = Minimax(state_reached, depth - 1, nextAgent)
+                    #print(stateAction)
+
+                    if stateAction[0] > currentValue:
+                        currentValue = stateAction[0]
+                        currentAction = action
+                    valueActionMax = (currentValue, currentAction)
+                return valueActionMax
+
+            else:  # Min
+                currentValue = float("inf")
+                currentAction = Directions.STOP
+                actions = state.getLegalActions(agent)
+
+                """ If the nextState is greater than currentState"""
+                for action in actions:
+                    state_reached = state.generateSuccessor(agent, action)
+                    stateAction = Minimax(state_reached, depth - 1, nextAgent)
+                    # print(stateAction)
+
+                    if stateAction[0] < currentValue:
+                        currentValue = stateAction[0]
+                        currentAction = action
+                    valueActionMin = (currentValue, currentAction)
+                return valueActionMin
+
+        totalAgents = gameState.getNumAgents()
+
+        """ Iterate through the complete length and breath """
+        currentValueAction = Minimax(gameState, self.depth * totalAgents, self.index)
+
+        """" Return only action; because we will be getting a tuple of two values (currentValue, currentAction) """
+        return currentValueAction[1]
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
       Your minimax agent with alpha-beta pruning (question 3)
     """
+    "*** YOUR CODE HERE ***"
 
     def getAction(self, gameState):
-        """
-          Returns the minimax action using self.depth and self.evaluationFunction
-        """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        def alphaBetaPruning(state, depth, alpha, beta, agent):
+            # Note from Q3 that:
+            # alpha is Max's best option on path to root
+            # beta is Min's best option on path to root
+
+            """ Initially check the edje cases """
+            if state.isLose() or state.isWin() or (depth == 0):
+                return self.evaluationFunction(state), Directions.STOP
+
+            """ Next, add the agents and check the state + action """
+            nextAgent = (agent + 1) % totalAgents
+            if agent == self.index:  # Max
+                currentValue = float("-inf")
+                currentAction = Directions.STOP
+                actions = state.getLegalActions(agent)
+                """ If the nextState is greater than currentState """
+                for action in actions:
+                    state_reached = state.generateSuccessor(agent, action)
+                    stateAction = alphaBetaPruning(state_reached, depth - 1, alpha, beta, nextAgent)
+                    # print(stateAction)
+
+                    if stateAction[0] > currentValue:
+                        currentValue = stateAction[0]
+                        currentAction = action
+                    valueActionMax = (currentValue, currentAction)
+
+                    """ Check the condition of alphaBeta pruning; when (currentValue > beta) return the tuple """
+                    if currentValue > beta:
+                        return valueActionMax
+                    alpha = max(alpha, currentValue)
+
+                return valueActionMax
+
+            else:  # Min
+                currentValue = float("inf")
+                currentAction = Directions.STOP
+                actions = state.getLegalActions(agent)
+
+                """ If the nextState is greater than currentState"""
+                for action in actions:
+                    state_reached = state.generateSuccessor(agent, action)
+                    stateAction = alphaBetaPruning(state_reached, depth - 1, alpha, beta, nextAgent)
+                    # print(stateAction)
+
+                    if stateAction[0] < currentValue:
+                        currentValue = stateAction[0]
+                        currentAction = action
+                    valueActionMin = (currentValue, currentAction)
+
+                    """ Check the condition of alphaBeta pruning; prune the part when (currentValue < alpha) statisfies """
+                    if currentValue < alpha:
+                        break
+                    beta = min(beta, currentValue)
+
+                return valueActionMin
+
+        totalAgents = gameState.getNumAgents()
+
+        """ Iterate through the complete length and breath """
+        currentValueAction = alphaBetaPruning(gameState, self.depth * totalAgents, float("-inf"), float("inf"), self.index)
+
+        """" Return only action; because we will be getting a tuple of two values (currentValue, currentAction) """
+        return currentValueAction[1]
+
+        #util.raiseNotDefined()
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -169,6 +281,55 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
+
+        def expectiMax(state, depth, agent):
+            """ Initially check the edje cases """
+            if state.isLose() or state.isWin() or (depth == 0):
+                return self.evaluationFunction(state), Directions.STOP
+
+            """ Next, add the agents and check the state + action """
+            nextAgent = (agent + 1) % totalAgents
+            if agent == self.index:  # Max
+                currentValue = float("-inf")
+                currentAction = Directions.STOP
+                actions = state.getLegalActions(agent)
+
+                """ If the nextState is greater than currentState"""
+                for action in actions:
+                    state_reached = state.generateSuccessor(agent, action)
+                    stateAction = expectiMax(state_reached, depth - 1, nextAgent)
+                    #print(stateAction)
+
+                    if stateAction[0] > currentValue:
+                        currentValue = stateAction[0]
+                        currentAction = action
+                    valueActionMax = (currentValue, currentAction)
+                return valueActionMax
+
+            else:  # Chance
+                currentValue = []
+                currentAction = Directions.STOP
+                actions = state.getLegalActions(agent)
+
+                for action in actions:
+                    state_reached = state.generateSuccessor(agent, action)
+                    stateAction = expectiMax(state_reached, depth - 1, nextAgent)
+                    # print(stateAction)
+                    currentValue.append(stateAction[0])
+
+                """ Apply the logic of Chance; take the average of the children nodes"""
+                currentValue = sum(currentValue) / len(currentValue)
+                valueActionChance = (currentValue, currentAction)
+                return valueActionChance
+
+        totalAgents = gameState.getNumAgents()
+
+        """ Iterate through the complete length and breath """
+        currentValueAction = expectiMax(gameState, self.depth * totalAgents, self.index)
+
+        """" Return only action; because we will be getting a tuple of two values (currentValue, currentAction) """
+        return currentValueAction[1]
+
         util.raiseNotDefined()
 
 def betterEvaluationFunction(currentGameState):
